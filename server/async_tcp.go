@@ -111,13 +111,13 @@ func RunASyncTCPServer() error {
 				}
 			} else {
 				comm := core.FDComm{Fd: int(events[i].Fd)}
-				cmd, err := readCommand(comm)
+				cmds, err := readCommands(comm)
 				if err != nil {
 					syscall.Close(int(events[i].Fd))
 					con_clients--
 					continue
 				}
-				respond(cmd, comm)
+				respond(cmds, comm)
 			}
 
 		}
