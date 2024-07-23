@@ -4,12 +4,24 @@ import (
 	"errors"
 )
 
-func Decode(data []byte) (interface{}, error) {
+func Decode(data []byte) ([]interface{}, error) {
 	if len(data) == 0 {
 		return nil, errors.New("no data")
 	}
-	value, _, err := DecodeOne(data)
-	return value, err
+
+	var values []interface{} = make([]interface{}, 0)
+
+	var index int = 0
+
+	for index < len(data) {
+		value, delta, err := DecodeOne(data[index:])
+		if err != nil {
+			return values, err
+		}
+		index = index + delta
+		values = append(values, value)
+	}
+	return values, nil
 }
 
 func DecodeOne(data []byte) (interface{}, int, error) {
@@ -111,19 +123,4 @@ func readArray(data []byte) (interface{}, int, error) {
 		pos = pos + delta
 	}
 	return elems, pos, nil
-}
-
-func DecodeArrayString(data []byte) ([]string, error) {
-	value, err := Decode(data)
-	if err != nil {
-		return nil, err
-	}
-
-	ts := value.([]interface{})
-	tokens := make([]string, len(ts))
-
-	for i := range tokens {
-		tokens[i] = ts[i].(string)
-	}
-	return tokens, nil
 }

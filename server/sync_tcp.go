@@ -37,7 +37,7 @@ func RunSyncTcpServer() {
 
 		for {
 			// over the socket continously read the command and print it out.
-			cmd, err := readCommand(conn)
+			cmds, err := readCommands(conn)
 			if err != nil {
 				conn.Close()
 				con_clients -= 1
@@ -48,9 +48,9 @@ func RunSyncTcpServer() {
 				log.Println("err", err)
 			}
 
-			log.Println("command : ", cmd)
+			log.Println("command : ", cmds)
 
-			respond(cmd, conn)
+			respond(cmds, conn)
 
 		}
 
@@ -58,7 +58,7 @@ func RunSyncTcpServer() {
 
 }
 
-func readCommand(conn io.ReadWriter) (*core.RedisCmd, error) {
+func readCommands(conn io.ReadWriter) (core.RedisCmds, error) {
 
 	var buf []byte = make([]byte, 512)
 	n, err := conn.Read(buf[:])
@@ -66,22 +66,41 @@ func readCommand(conn io.ReadWriter) (*core.RedisCmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	tokens, err := core.DecodeArrayString(buf[:n])
 
+	values, err := core.Decode(buf[:n])
 	if err != nil {
 		return nil, err
 	}
 
-	return &core.RedisCmd{
-		Cmd:  strings.ToUpper(tokens[0]),
-		Args: tokens[1:],
-	}, nil
+	var cmds []*core.RedisCmd = make([]*core.RedisCmd, 0)
+
+	for _, value := range values {
+		tokens, err := toArrayString(value.([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+
+		cmds = append(cmds, &core.RedisCmd{
+			Cmd:  strings.ToUpper(tokens[0]),
+			Args: tokens[1:],
+		})
+	}
+
+	return cmds, nil
 
 }
 
-func respond(cmd *core.RedisCmd, conn io.ReadWriter) {
+func toArrayString(ai []interface{}) ([]string, error) {
+	as := make([]string, len(ai))
+	for i := range ai {
+		as[i] = ai[i].(string)
+	}
+	return as, nil
+}
 
-	err := core.EvalAndRespond(cmd, conn)
+func respond(cmds core.RedisCmds, conn io.ReadWriter) {
+
+	err := core.EvalAndRespond(cmds, conn)
 
 	if err != nil {
 		respondError(err, conn)
