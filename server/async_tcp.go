@@ -124,24 +124,3 @@ func RunASyncTCPServer() error {
 	}
 
 }
-
-// func readCommandIO(conn io.ReadWriter) (*core.RedisCmd, error) {
-
-// 	var buf []byte = make([]byte, 512)
-// 	n, err := conn.Read(buf[:])
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	tokens, err := core.DecodeArrayString(buf[:n])
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &core.RedisCmd{
-// 		Cmd:  strings.ToUpper(tokens[0]),
-// 		Args: tokens[1:],
-// 	}, nil
-
-// }

@@ -58,26 +58,6 @@ func RunSyncTcpServer() {
 
 }
 
-// func readCommand(conn net.Conn) (*core.RedisCmd, error) {
-
-// 	var buf []byte = make([]byte, 512)
-// 	n, err := conn.Read(buf[:])
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	tokens, err := core.DecodeArrayString(buf[:n])
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &core.RedisCmd{
-// 		Cmd:  strings.ToUpper(tokens[0]),
-// 		Args: tokens[1:],
-// 	}, nil
-
-// }
 func readCommand(conn io.ReadWriter) (*core.RedisCmd, error) {
 
 	var buf []byte = make([]byte, 512)
@@ -108,19 +88,6 @@ func respond(cmd *core.RedisCmd, conn io.ReadWriter) {
 	}
 }
 
-// func respond(cmd *core.RedisCmd, conn net.Conn) {
-
-// 	err := core.EvalAndRespond(cmd, conn)
-
-// 	if err != nil {
-// 		respondError(err, conn)
-// 	}
-// }
-
 func respondError(err error, conn io.ReadWriter) {
 	conn.Write([]byte(fmt.Sprintf("-%s\r\n", err)))
 }
-
-// func respondErrorIO(err error, conn io.ReadWriter) {
-// 	conn.Write([]byte(fmt.Sprintf("-%s\r\n", err)))
-// }
