@@ -38,6 +38,8 @@ func EvalAndRespond(cmds RedisCmds, conn io.ReadWriter) error {
 			buf.Write(evalDELETE(cmd.Args))
 		case "EXPIRE":
 			buf.Write(evalEXPIRE(cmd.Args))
+		case "BGREWRITEAOF":
+			buf.Write(evalBGREWRITEAOF(cmd.Args))
 		default:
 			buf.Write(evalPING(cmd.Args))
 		}
@@ -185,6 +187,15 @@ func evalEXPIRE(args []string) []byte {
 	return RESP_ONE
 }
 
+func evalBGREWRITEAOF(args []string) []byte {
+	DumpAllAOF()
+	return RESP_OK
+}
+
+func encodeString(v string) []byte {
+	return []byte(fmt.Sprintf("$%d\r\n%s\r\n", len(v), v))
+}
+
 func Encode(value interface{}, isSimple bool) []byte {
 
 	switch v := value.(type) {
@@ -194,6 +205,13 @@ func Encode(value interface{}, isSimple bool) []byte {
 		} else {
 			return []byte(fmt.Sprintf("$%d\r\n%s\r\n", len(v), v))
 		}
+	case []string:
+		var b []byte
+		buf := bytes.NewBuffer(b)
+		for _, b := range value.([]string) {
+			buf.Write(encodeString(b))
+		}
+		return []byte(fmt.Sprintf("*%d\r\n%s", len(v), buf.Bytes()))
 	case int, int8, int16, int32, int64:
 		return []byte(fmt.Sprintf(":%d\r\n", value))
 	}
